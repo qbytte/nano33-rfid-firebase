@@ -64,6 +64,7 @@ void setup()
 
 void loop()
 {
+    getID();
 }
 
 void getID()
@@ -82,5 +83,32 @@ void getID()
 
     ID.toUpperCase();
     Serial.println(ID);
-    delay(300);
+
+    updateStatus(ID);
+    delay(1500);
+}
+
+void updateStatus(String ID)
+{
+    if (Firebase.getBool(fbdo, path + "employees/" + ID + "/atWork"))
+    {
+        bool status = fbdo.boolData();
+
+        if (Firebase.setBool(fbdo, path + "employees/" + ID + "/atWork", !status))
+        {
+            if (fbdo.boolData())
+                digitalWrite(GREEN_LED, HIGH);
+            else if (!fbdo.boolData())
+                digitalWrite(RED_LED, HIGH);
+            
+            delay(2000);
+
+            digitalWrite(GREEN_LED, LOW);
+            digitalWrite(RED_LED, LOW);
+        }
+    }
+    else
+    {
+        Serial.println(fbdo.errorReason());
+    }
 }
