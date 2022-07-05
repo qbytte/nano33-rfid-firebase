@@ -7,8 +7,19 @@
 #define SS_PIN 10
 #define RST_PIN 9
 
+// led indicators
+#define GREEN_LED 2
 #define RED_LED 3
-#define GREEN_LED 4
+
+// dummy inputs to simulate RFID cards
+#define CARD_DUMMY1 4
+#define CARD_DUMMY2 5
+#define CARD_DUMMY3 A7 
+
+// dummy ids corresponding to dummy cards
+#define ID_DUMMY1 "AD3546F3"
+#define ID_DUMMY2 "61AF3262"
+#define ID_DUMMY3 "4123DA3C"
 
 char ssid[] = SECRET_SSID;
 char pass[] = SECRET_PASS;
@@ -24,8 +35,12 @@ MFRC522 rfid(SS_PIN, RST_PIN);
 
 void setup()
 {
-    pinMode(RED_LED, OUTPUT);
     pinMode(GREEN_LED, OUTPUT);
+    pinMode(RED_LED, OUTPUT);
+
+    pinMode(CARD_DUMMY1, INPUT);
+    pinMode(CARD_DUMMY2, INPUT);
+    pinMode(CARD_DUMMY3, INPUT);
 
     Serial.begin(9600);
     SPI.begin();
@@ -65,6 +80,18 @@ void setup()
 void loop()
 {
     getID();
+    
+    if (!digitalRead(CARD_DUMMY1)) {
+      updateStatus(ID_DUMMY1);
+    }
+
+    if (!digitalRead(CARD_DUMMY2)) {
+      updateStatus(ID_DUMMY2);
+    }
+
+    if (!digitalRead(CARD_DUMMY3)) {
+      updateStatus(ID_DUMMY3);
+    }
 }
 
 void getID()
@@ -90,6 +117,7 @@ void getID()
 
 void updateStatus(String ID)
 {
+  Serial.println(ID);
     if (Firebase.getBool(fbdo, path + "employees/" + ID + "/atWork"))
     {
         bool status = fbdo.boolData();
