@@ -154,8 +154,12 @@ void updateStatus(String ID)
             {
                 // sending current time and date to db
                 if (Firebase.setString(fbdo, endPoint + "/finish", getTime()) && Firebase.setString(fbdo, endPoint + "/date", getDate()))
+                {
                     // logged out indicator
                     digitalWrite(RED_LED, HIGH);
+                    // log data at the end of the shift
+                    logData(ID);
+                }
                 // log error reason
                 else Serial.println(fbdo.errorReason());
             }
@@ -169,6 +173,60 @@ void updateStatus(String ID)
         }
     }
     // log error reason
+    else Serial.println(fbdo.errorReason());
+}
+
+/*
+    logData() function
+    this function first retrieves specific data from the realtime db...
+        - ID (already obtained from card read)
+        - start hr
+        - finish hr
+        - date
+    
+    once all data is retrieved it is parsed into a string, then the string is pushed
+    to the logs section of the remote db
+*/
+void logData(String ID) 
+{
+    // built endpoint for easier access to the employee data
+    String endPoint = path + "employees/" + ID;
+
+    // commence building a json string with data obtained from db
+    String json = "{\"id\":\"" + ID;
+
+    if (Firebase.getString(fbdo, endPoint + "/start"))
+    {
+        json += "\", \"start\":\"" + fbdo.stringData();
+        if (Firebase.getString(fbdo, endPoint + "/finish"))
+        {
+            json += "\", \"finish\":\"" + fbdo.stringData();
+            if (Firebase.getString(fbdo, endPoint + "/date"))
+            {
+                json += "\", \"date\":\"" + fbdo.stringData() + "\"}";
+            }
+            else Serial.println(fbdo.errorReason());
+        }
+        else Serial.println(fbdo.errorReason());
+    }
+    else Serial.println(fbdo.errorReason());
+
+    // json string built
+    Serial.print("Data to be sent: ");
+    Serial.println(json);
+
+    if (Firebase.pushJSON(fbdo, path + "logs/", json)) 
+    {
+        // database path to be appended
+        Serial.print("Data path appended: ");
+        Serial.println(fbdo.dataPath());
+
+        // new created key/name
+        Serial.print("Log ID: ");
+        Serial.println(fbdo.pushName());
+
+        Serial.print("Data pushed successfully");
+    }
     else Serial.println(fbdo.errorReason());
 }
 
