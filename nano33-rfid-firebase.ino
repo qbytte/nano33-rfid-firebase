@@ -2,6 +2,9 @@
 
 #include "Firebase_Arduino_WiFiNINA.h"
 
+// Realtime library
+#include <RTCZero.h>
+
 #include <SPI.h>
 #include <MFRC522.h>
 #define SS_PIN 10
@@ -28,6 +31,9 @@ int status = WL_IDLE_STATUS;
 char db_url[] = SECRET_DB_URL;
 char db_sec[] = SECRET_DB_SEC;
 
+// Realtime library instance
+RTCZero rtc;
+
 FirebaseData fbdo;
 String path = "/";
 
@@ -45,6 +51,10 @@ void setup()
     Serial.begin(9600);
     SPI.begin();
     rfid.PCD_Init();
+    rtc.begin();
+
+    rtc.setTime(13, 15, 00);
+    rtc.setDate(7, 7, 22);
 
     // wait for serial port, only dev environment!
     while (!Serial)
@@ -117,17 +127,29 @@ void getID()
 
 void updateStatus(String ID)
 {
-  Serial.println(ID);
-    if (Firebase.getBool(fbdo, path + "employees/" + ID + "/atWork"))
+    String endPoint = path + "employees/" + ID;
+
+    Serial.println(endPoint);
+    if (Firebase.getBool(fbdo, endPoint + "/atWork"))
     {
         bool status = fbdo.boolData();
 
-        if (Firebase.setBool(fbdo, path + "employees/" + ID + "/atWork", !status))
+        if (Firebase.setBool(fbdo, endPoint + "/atWork", !status))
         {
             if (fbdo.boolData())
-                digitalWrite(GREEN_LED, HIGH);
+            {
+                if (Firebase.setString(fbdo, endPoint + "/start", getTime()))
+                    digitalWrite(GREEN_LED, HIGH);
+                else 
+                    Serial.println(fbdo.errorReason());
+            }
             else if (!fbdo.boolData())
-                digitalWrite(RED_LED, HIGH);
+            {
+                if (Firebase.setString(fbdo, endPoint + "/finish", getTime()) && Firebase.setString(fbdo, endPoint + "/date", getDate()))
+                    digitalWrite(RED_LED, HIGH);
+                else 
+                    Serial.println(fbdo.errorReason());
+            }
             
             delay(2000);
 
@@ -136,7 +158,45 @@ void updateStatus(String ID)
         }
     }
     else
-    {
         Serial.println(fbdo.errorReason());
-    }
+}
+
+String getTime() 
+{
+    int h = rtc.getHours();
+    int m = rtc.getMinutes();
+    int s = rtc.getSeconds();
+
+    String time = "";
+
+    if (h < 10) time += "0";
+    time += h;
+    time += ":";
+    if (m < 10) time += "0";
+    time += m;
+    time += ":";
+    if (s < 10) time += "0";
+    time += s;
+
+    return time;
+}
+
+String getDate()
+{
+    int d = rtc.getDay();
+    int mo = rtc.getMonth();
+    int yr = rtc.getYear();
+
+    String date = "";
+
+    if (d < 10) date += "0";
+    date += d;
+    date += "/";
+    if (mo < 10) date += "0";
+    date += mo;
+    date += "/";
+    if (yr < 10) date += "0";
+    date += yr;
+
+    return date;
 }
