@@ -14,8 +14,9 @@
 #define RST_PIN 9
 
 // led indicators
-#define GREEN_LED 2
-#define RED_LED 3
+#define YELLOW_LED 2
+#define GREEN_LED 3
+#define RED_LED 4
 
 // wifi credentials obtained from secrets file
 char ssid[] = SECRET_SSID;
@@ -39,6 +40,7 @@ MFRC522 rfid(SS_PIN, RST_PIN);
 void setup()
 {
     // led indicators as outputs
+    pinMode(YELLOW_LED, OUTPUT);
     pinMode(GREEN_LED, OUTPUT);
     pinMode(RED_LED, OUTPUT);
 
@@ -51,8 +53,8 @@ void setup()
 
     // start rtc clock and set time and date
     rtc.begin();
-    rtc.setTime(13, 15, 00);
-    rtc.setDate(7, 7, 22);
+    rtc.setTime(7, 15, 00);
+    rtc.setDate(8, 7, 22);
 
     // wait for serial port, only dev environment!
     while (!Serial);
@@ -114,9 +116,6 @@ void getID()
 
     // call to update status to change the ID current status (working or not)
     updateStatus(ID);
-
-    // delay to avoid multiple reads
-    // delay(1500);
 }
 
 /*
@@ -147,7 +146,11 @@ void updateStatus(String ID)
                     // logged in indicator
                     digitalWrite(GREEN_LED, HIGH);
                 // log error reason
-                else Serial.println(fbdo.errorReason());
+                else
+                {
+                    digitalWrite(YELLOW_LED, HIGH);
+                    Serial.println(fbdo.errorReason());
+                }
             }
             // if the status updated is false, the employee is ending the shift
             else if (!fbdo.boolData())
@@ -161,19 +164,33 @@ void updateStatus(String ID)
                     logData(ID);
                 }
                 // log error reason
-                else Serial.println(fbdo.errorReason());
+                else
+                {
+                    digitalWrite(YELLOW_LED, HIGH);
+                    Serial.println(fbdo.errorReason());
+                }
             }
-            
-            // delay to avoid multiple petitions
-            delay(2500);
-
-            // turning off led indicators
-            digitalWrite(GREEN_LED, LOW);
-            digitalWrite(RED_LED, LOW);
+        }
+        // log error reason
+        else
+        {
+            digitalWrite(YELLOW_LED, HIGH);
+            Serial.println(fbdo.errorReason());
         }
     }
     // log error reason
-    else Serial.println(fbdo.errorReason());
+    else
+    {
+        digitalWrite(YELLOW_LED, HIGH);
+        Serial.println("Path does not exist");
+    }
+    // delay to avoid multiple petitions
+    delay(2500);
+
+    // turning off led indicators
+    digitalWrite(YELLOW_LED, LOW);
+    digitalWrite(GREEN_LED, LOW);
+    digitalWrite(RED_LED, LOW);
 }
 
 /*
