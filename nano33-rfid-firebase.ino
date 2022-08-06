@@ -53,8 +53,8 @@ void setup()
 
     // start rtc clock and set time and date
     rtc.begin();
-    rtc.setTime(7, 15, 00);
-    rtc.setDate(8, 7, 22);
+    rtc.setTime(7, 00, 00);
+    rtc.setDate(5, 8, 22);
 
     // wait for serial port, only dev environment!
     while (!Serial);
@@ -287,15 +287,17 @@ String getDate()
 
     String date = "";
 
+    date += "20";
+
     // if any digit's less than zero add a zero to the left to have a standard format
-    if (d < 10) date += "0";
-    date += d;
-    date += "/";
-    if (mo < 10) date += "0";
-    date += mo;
-    date += "/";
     if (yr < 10) date += "0";
     date += yr;
+    date += "-";
+    if (mo < 10) date += "0";
+    date += mo;
+    date += "-";
+    if (d < 10) date += "0";
+    date += d;
 
     // return string with current date
     return date;
