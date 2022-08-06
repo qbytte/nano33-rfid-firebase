@@ -53,19 +53,32 @@ void setup()
 
     // start rtc clock and set time and date
     rtc.begin();
-    rtc.setTime(7, 00, 00);
+    rtc.setTime(7, 0, 0);
     rtc.setDate(5, 8, 22);
 
     // wait for serial port, only dev environment!
-    while (!Serial);
+    // while (!Serial);
 
     // wait for connection to network 
     while (status != WL_CONNECTED)
     {
+        // waiting for connection indicator
+        digitalWrite(YELLOW_LED, HIGH);
+        
         Serial.print("Attempting to connect to network: ");
         Serial.println(ssid);
         status = WiFi.begin(ssid, pass);
         delay(10000);
+        digitalWrite(YELLOW_LED, LOW);
+    }
+
+    // connection indicator
+    for (int i = 0; i <= 3; i++) 
+    {
+      digitalWrite(GREEN_LED, HIGH);
+      delay(350);
+      digitalWrite(GREEN_LED, LOW);
+      delay(350);
     }
 
     // print ip and network
@@ -125,6 +138,12 @@ void getID()
 */
 void updateStatus(String ID)
 {
+    // led indicating a card has been read
+    digitalWrite(YELLOW_LED, HIGH);
+    delay(250);
+    digitalWrite(YELLOW_LED, LOW);
+    delay(250);
+
     // built endpoint for easier access to the employee data
     String endPoint = path + "employees/" + ID;
     Serial.println(endPoint);
@@ -185,7 +204,7 @@ void updateStatus(String ID)
         Serial.println("Path does not exist");
     }
     // delay to avoid multiple petitions
-    delay(2500);
+    delay(1000);
 
     // turning off led indicators
     digitalWrite(YELLOW_LED, LOW);
